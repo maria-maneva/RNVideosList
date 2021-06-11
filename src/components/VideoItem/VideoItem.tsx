@@ -6,9 +6,10 @@ import React, {
   useCallback,
 } from 'react';
 import { StyleSheet, View, Text, Alert } from 'react-native';
-import Video, { OnLoadData, OnProgressData } from 'react-native-fast-video';
+import Video, { OnLoadData, OnProgressData } from 'react-native-video';
 import VideoControls from './VideoControls';
 import Loader from '../Loader';
+import { useIsAndroid } from './../../hooks';
 
 interface IVideoItemProps {
   isPaused?: boolean;
@@ -31,6 +32,7 @@ const VideoItem = ({
   const [loaded, setLoaded] = useState(false);
   const [data, setData] = useState<OnLoadData | null>(null);
   const [progress, setProgress] = useState<OnProgressData | null>(null);
+  const isAndroid = useIsAndroid();
 
   const handleSlidingComplete = useCallback(
     (value: number) => {
@@ -42,14 +44,18 @@ const VideoItem = ({
   const resetPlayer = useCallback(() => {
     videoRef.current?.seek(0);
     setProgress(prevProgress =>
-      prevProgress ? { ...prevProgress, currentTime: 0 } : prevProgress,
+      prevProgress
+        ? { ...(prevProgress as OnProgressData), currentTime: 0 }
+        : prevProgress,
     );
     if (!isPaused) {
       onPlayPause();
     }
   }, [videoRef, isPaused, onPlayPause]);
 
-  const handleError = useCallback(() => {
+  const handleError = useCallback(error => {
+    // note: videos over http will throw an unknown error on ios
+    console.log(error);
     Alert.alert('Oops! Something went wrong with the video');
   }, []);
 
@@ -65,12 +71,14 @@ const VideoItem = ({
   }, []);
 
   useEffect(() => {
-    if (isFullScreen && videoRef.current) {
-      videoRef.current?.presentFullscreenPlayer();
-    } else {
-      videoRef.current?.dismissFullscreenPlayer();
+    if (isAndroid) {
+      if (isFullScreen && videoRef.current) {
+        videoRef.current?.presentFullscreenPlayer();
+      } else {
+        videoRef.current?.dismissFullscreenPlayer();
+      }
     }
-  }, [isFullScreen, videoRef]);
+  }, [isFullScreen, videoRef, isAndroid]);
 
   return (
     <View style={[styles.container]}>

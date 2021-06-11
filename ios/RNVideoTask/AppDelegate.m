@@ -23,9 +23,17 @@ static void InitializeFlipper(UIApplication *application) {
 }
 #endif
 
+#import "Orientation.h"
+
 @implementation AppDelegate
 
+- (UIInterfaceOrientationMask)application:(UIApplication *)application supportedInterfaceOrientationsForWindow:(UIWindow *)window {
+  return [Orientation getOrientation];
+}
+
+
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
+
 {
 #ifdef FB_SONARKIT_ENABLED
   InitializeFlipper(application);

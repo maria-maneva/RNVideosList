@@ -81,15 +81,16 @@ const VideosList = () => {
   }, []);
 
   useEffect(() => {
-    //Get thumbnails & set initial video data
+    // Get thumbnails & set initial video data
     let thumbnails: string[];
 
     const loadThumbnails = async () => {
       thumbnails = (await createThumbnails()) as string[];
+
       setVideos(() =>
         videoConfigsInitial.map((vc, index) => ({
           ...vc,
-          thumb: thumbnails[index] ?? null,
+          thumb: thumbnails[index],
         })),
       );
     };
