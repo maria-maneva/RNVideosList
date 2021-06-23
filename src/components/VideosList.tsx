@@ -51,41 +51,24 @@ const VideosList = () => {
     [videos],
   );
 
-  const createThumbnails = useCallback(async () => {
-    // Generate thumbnails or get from cache
-    const thumbnails: string[] = [];
-    const thumbPromises = videoConfigsInitial.map(
-      vc =>
-        new Promise<void>(async (resolve, _) => {
+  useEffect(() => {
+    // Get thumbnails & set initial video data
+    const loadThumbnails = async () => {
+      const thumbnails = await Promise.all(
+        videoConfigsInitial.map(async vc => {
           try {
-            const response = await createThumbnail({
+            const { path } = await createThumbnail({
               url: vc.url as string,
               timeStamp: 4000,
               format: 'jpeg',
               cacheName: `vidThumb${vc.id}`,
             });
-            thumbnails.push(response.path);
-          } catch (err) {
-            console.log(err, 'Error creating thumbnail');
-            thumbnails.push('');
-          } finally {
-            resolve();
+            return path;
+          } catch (_) {
+            return '';
           }
         }),
-    );
-
-    return new Promise(async (resolve, _) => {
-      await Promise.all(thumbPromises);
-      resolve(thumbnails);
-    });
-  }, []);
-
-  useEffect(() => {
-    // Get thumbnails & set initial video data
-    let thumbnails: string[];
-
-    const loadThumbnails = async () => {
-      thumbnails = (await createThumbnails()) as string[];
+      );
 
       setVideos(() =>
         videoConfigsInitial.map((vc, index) => ({
@@ -96,7 +79,7 @@ const VideosList = () => {
     };
 
     loadThumbnails();
-  }, [createThumbnails]);
+  }, []);
 
   useEffect(() => {
     // Toggle full screen
@@ -107,7 +90,7 @@ const VideosList = () => {
     } else {
       Orientation.unlockAllOrientations();
     }
-  }, [fullScreenVideo, createThumbnails, videos]);
+  }, [fullScreenVideo, videos]);
 
   return (
     <View style={fullScreenVideo ? styles.containerFull : styles.containerGrid}>
