@@ -59,15 +59,15 @@ const VideoItem = ({
     Alert.alert('Oops! Something went wrong with the video');
   }, []);
 
-  const handleLoad = useCallback((data: any) => {
+  const handleLoad = useCallback((loadData: OnLoadData) => {
     setLoaded(true);
-    if (data) {
-      setData(data);
+    if (loadData) {
+      setData(loadData);
     }
   }, []);
 
-  const handleProgress = useCallback((data: OnProgressData) => {
-    setProgress(data);
+  const handleProgress = useCallback((progressData: OnProgressData) => {
+    setProgress(progressData);
   }, []);
 
   useEffect(() => {

@@ -96,7 +96,7 @@ const VideosList = () => {
     };
 
     loadThumbnails();
-  }, []);
+  }, [createThumbnails]);
 
   useEffect(() => {
     // Toggle full screen
@@ -107,7 +107,7 @@ const VideosList = () => {
     } else {
       Orientation.unlockAllOrientations();
     }
-  }, [fullScreenVideo]);
+  }, [fullScreenVideo, createThumbnails, videos]);
 
   return (
     <View style={fullScreenVideo ? styles.containerFull : styles.containerGrid}>
