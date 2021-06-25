@@ -7,9 +7,9 @@ interface IVideoControls {
   currentPlayTime?: number;
   duration?: number;
   isPaused?: boolean;
-  onPlayPause: () => void;
-  onSlidingComplete: (value: number) => void;
-  onFullScreen: () => void;
+  onPlayPause?: () => void;
+  onSlidingComplete?: (value: number) => void;
+  onFullScreen?: () => void;
   isFullScreen?: boolean;
 }
 

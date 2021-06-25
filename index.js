@@ -3,7 +3,15 @@
  */
 
 import { AppRegistry } from 'react-native';
-import App from './App';
+import React from 'react';
+import App from './src/App';
 import { name as appName } from './app.json';
+import { VideosProvider } from './src/store/videos.context';
 
-AppRegistry.registerComponent(appName, () => App);
+const AppWrapper = () => (
+  <VideosProvider>
+    <App />
+  </VideosProvider>
+);
+
+AppRegistry.registerComponent(appName, () => AppWrapper);

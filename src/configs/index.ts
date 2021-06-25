@@ -16,6 +16,8 @@ export interface IVideoConfig {
   thumb?: string | null;
   isPaused: boolean;
   isFullScreen: boolean;
+  progress?: number;
+  duration?: number;
 }
 
 export const videoConfigsInitial: IVideoConfig[] = (() =>
