@@ -4,6 +4,7 @@ import React, {
   useRef,
   useCallback,
   useEffect,
+  useMemo,
 } from 'react';
 import VideoPlayer from '../components/VideoPlayer/VideoPlayer';
 import Video, {
@@ -25,19 +26,23 @@ const useVideoPlayer = (videoId: string, isInModal?: boolean) => {
 
   const video = useVideo(videoId);
   const { isPaused, url, thumb, isFullScreen, progress } = video;
+  const _isPaused = useMemo(
+    () => (!isInModal && isFullScreen ? true : isPaused),
+    [isFullScreen, isInModal, isPaused],
+  );
 
   const [duration, setDuration] = useState(0);
   const [_progress, _setProgress] = useState(0);
   const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState(false);
 
-  const togglePlayPause = useCallback(
-    (atTime?: number) => {
-      dispatch(setPlayPause({ ...video, progress: atTime ?? _progress }));
-    },
-    [dispatch, _progress, video],
-  );
+  const togglePlayPause = useCallback(() => {
+    dispatch(setPlayPause({ ...video }));
+  }, [dispatch, video]);
 
+  // When player's full screen functionality is toggled,
+  // the currrent progress is stored in the reducer
+  // so that after the switch the playback could resume from the same place
   const toggleFullScreen = useCallback(() => {
     dispatch(
       setToggleVideoFullScreen({
@@ -50,7 +55,7 @@ const useVideoPlayer = (videoId: string, isInModal?: boolean) => {
   const reset = useCallback(() => {
     videoRef.current?.seek(0);
     if (!isPaused) {
-      togglePlayPause(0);
+      togglePlayPause();
     }
   }, [isPaused, togglePlayPause]);
 
@@ -86,7 +91,7 @@ const useVideoPlayer = (videoId: string, isInModal?: boolean) => {
 
   const _handleSlidingComplete = useCallback(
     (value: number) => {
-      videoRef.current?.seek(Number(value.toFixed(2)));
+      videoRef.current?.seek(Math.ceil(value));
     },
     [videoRef],
   );
@@ -112,7 +117,7 @@ const useVideoPlayer = (videoId: string, isInModal?: boolean) => {
       duration={duration}
       currentTime={_progress ?? progress}
       isFullScreen={isFullScreen && isInModal}
-      isPaused={!isInModal && isFullScreen ? true : isPaused}
+      isPaused={_isPaused}
       loaded={!!url && loaded}
       onFullScreen={toggleFullScreen}
       onSlidingComplete={_handleSlidingComplete}
@@ -126,16 +131,15 @@ const useVideoPlayer = (videoId: string, isInModal?: boolean) => {
       poster={thumb ?? ''}
       posterResizeMode="cover"
       onSeek={_handleSeek}
-      onBuffer={(stuff: any) => console.log({ stuff })}
     />
   );
 
   return {
     component,
     videoRef,
-    isPaused,
+    isPaused: _isPaused,
     isFullScreen,
-    progress,
+    progress: _progress,
     togglePlayPause,
     reset,
   };
