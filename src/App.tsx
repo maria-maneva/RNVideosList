@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, SafeAreaView } from 'react-native';
 import VideosList from './components/VideosList/VideosList';
 import { videoConfigsInitial } from './configs';
 import { setVideos } from './store/videos.actions';
@@ -29,13 +29,13 @@ const App = () => {
   }, [dispatch]);
 
   return (
-    <View style={styles.container}>
-      <View style={styles.listContainer}>
+    <SafeAreaView style={styles.container}>
+      <View style={styles.header}>
         <Text>VIDEOS</Text>
       </View>
       <VideosList />
       {fullScreenVideo && <VideoPlayerModal videoId={fullScreenVideo.id} />}
-    </View>
+    </SafeAreaView>
   );
 };
 
@@ -46,7 +46,7 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: 'column',
   },
-  listContainer: {
+  header: {
     height: 50,
     justifyContent: 'center',
     alignItems: 'center',

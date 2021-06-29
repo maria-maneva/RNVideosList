@@ -5,5 +5,5 @@ import { VideosContext } from '../store/videos.context';
 export const useVideos = (): IVideoConfig[] | null => {
   const { state } = useContext(VideosContext);
 
-  return useMemo(() => state.videos, [state]);
+  return useMemo(() => state.videos, [state.videos]);
 };

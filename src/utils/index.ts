@@ -29,3 +29,31 @@ export const createThumnails = async (videos: IVideoConfig[]) =>
       }
     }),
   );
+
+export const playPauseStateVideo = (
+  stateVideos: IVideoConfig[],
+  payload: IVideoConfig,
+) =>
+  stateVideos.map(vc => {
+    if (vc.id === payload.id) {
+      return {
+        ...payload,
+        isPaused: !vc.isPaused,
+      };
+    }
+    return { ...vc, isPaused: true };
+  });
+
+export const toggleStateVideoFullScreen = (
+  stateVideos: IVideoConfig[],
+  payload: IVideoConfig,
+) =>
+  stateVideos.map(vc => {
+    if (vc.id === payload.id) {
+      return {
+        ...payload,
+        isFullScreen: !vc.isFullScreen,
+      };
+    }
+    return { ...vc, isFullScreen: false };
+  });

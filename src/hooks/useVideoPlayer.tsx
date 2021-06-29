@@ -1,5 +1,4 @@
 import React, {
-  useMemo,
   useState,
   MutableRefObject,
   useRef,
@@ -7,10 +6,12 @@ import React, {
   useEffect,
 } from 'react';
 import VideoPlayer from '../components/VideoPlayer/VideoPlayer';
-import Video, { OnLoadData, OnProgressData } from 'react-native-video';
-import { StyleSheet } from 'react-native';
+import Video, {
+  OnLoadData,
+  OnProgressData,
+  OnSeekData,
+} from 'react-native-video';
 import Orientation from 'react-native-orientation-locker';
-import { Platform } from 'react-native';
 import { useVideo } from '.';
 import {
   setPlayPause,
@@ -20,23 +21,53 @@ import { useVideosDispatch } from './useVideosDispatch';
 
 const useVideoPlayer = (videoId: string, isInModal?: boolean) => {
   const dispatch = useVideosDispatch();
+  const videoRef: MutableRefObject<Video | null> = useRef(null);
+
   const video = useVideo(videoId);
   const { isPaused, url, thumb, isFullScreen, progress } = video;
-  const [data, setData] = useState<OnLoadData | null>(null);
-  const [localProgress, setLocalProgress] = useState<OnProgressData | null>(
-    null,
-  );
+
+  const [duration, setDuration] = useState(0);
+  const [_progress, _setProgress] = useState(0);
   const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState(false);
-  const videoRef: MutableRefObject<Video | null> = useRef(null);
-  const isAndroid = useMemo(() => Platform.OS === 'android', []);
 
-  const _handleLoad = useCallback((loadData: OnLoadData) => {
-    setLoaded(true);
-    if (loadData) {
-      setData(loadData);
+  const togglePlayPause = useCallback(
+    (atTime?: number) => {
+      dispatch(setPlayPause({ ...video, progress: atTime ?? _progress }));
+    },
+    [dispatch, _progress, video],
+  );
+
+  const toggleFullScreen = useCallback(() => {
+    dispatch(
+      setToggleVideoFullScreen({
+        ...video,
+        progress: _progress,
+      }),
+    );
+  }, [dispatch, _progress, video]);
+
+  const reset = useCallback(() => {
+    videoRef.current?.seek(0);
+    if (!isPaused) {
+      togglePlayPause(0);
     }
-  }, []);
+  }, [isPaused, togglePlayPause]);
+
+  const _resumePosition = useCallback(() => {
+    videoRef.current?.seek(progress ?? 0, 0);
+  }, [progress]);
+
+  const _handleLoad = useCallback(
+    (loadData: OnLoadData) => {
+      if (loadData) {
+        setDuration(loadData.duration);
+      }
+      setLoaded(true);
+      _resumePosition();
+    },
+    [_resumePosition],
+  );
 
   const _handleError = useCallback(e => {
     // note: videos over http will throw an unknown error on ios
@@ -44,47 +75,21 @@ const useVideoPlayer = (videoId: string, isInModal?: boolean) => {
     setError(true);
   }, []);
 
-  const _handleProgress = useCallback((progressData: OnProgressData) => {
-    setLocalProgress(progressData);
+  const _handleSeek = useCallback(({ currentTime }: OnSeekData) => {
+    _setProgress(currentTime);
+  }, []);
+
+  const _handleProgress = useCallback(({ currentTime }: OnProgressData) => {
+    setError(false);
+    _setProgress(currentTime);
   }, []);
 
   const _handleSlidingComplete = useCallback(
     (value: number) => {
-      videoRef.current?.seek(Math.floor(value), 20);
+      videoRef.current?.seek(Number(value.toFixed(2)));
     },
     [videoRef],
   );
-
-  const toggle = useCallback(() => {
-    dispatch(setPlayPause({ ...video, progress: localProgress?.currentTime }));
-  }, [dispatch, localProgress?.currentTime, video]);
-
-  const toggleFullScreen = useCallback(() => {
-    dispatch(
-      setToggleVideoFullScreen({
-        ...video,
-        progress: localProgress?.currentTime,
-      }),
-    );
-  }, [dispatch, localProgress?.currentTime, video]);
-
-  const reset = useCallback(() => {
-    videoRef.current?.seek(0);
-    setLocalProgress(prevProgress =>
-      prevProgress
-        ? { ...(prevProgress as OnProgressData), currentTime: 0 }
-        : prevProgress,
-    );
-    if (!isPaused) {
-      toggle();
-    }
-  }, [videoRef, isPaused, toggle]);
-
-  useEffect(() => {
-    if (progress && videoRef.current) {
-      videoRef.current.seek(progress ?? 0);
-    }
-  }, [isPaused, isFullScreen, progress]);
 
   useEffect(() => {
     if (isFullScreen && isInModal) {
@@ -92,95 +97,48 @@ const useVideoPlayer = (videoId: string, isInModal?: boolean) => {
     } else {
       Orientation.unlockAllOrientations();
     }
-    if (isAndroid) {
-      if (isFullScreen && isInModal) {
-        videoRef.current?.presentFullscreenPlayer();
-      } else {
-        videoRef.current?.dismissFullscreenPlayer();
-      }
+  }, [isFullScreen, isInModal]);
+
+  useEffect(() => {
+    if (!isFullScreen) {
+      _resumePosition();
     }
-  }, [isFullScreen, isAndroid, isInModal]);
+  }, [_resumePosition, isFullScreen]);
 
-  const videoEl = useMemo(() => {
-    return (
-      url && (
-        <Video
-          ref={videoRef}
-          source={{ uri: url }}
-          paused={!isInModal && isFullScreen ? true : isPaused}
-          onError={_handleError}
-          style={[styles.video]}
-          onLoad={_handleLoad}
-          onProgress={_handleProgress}
-          onEnd={reset}
-          resizeMode="cover"
-          poster={thumb ?? ''}
-          posterResizeMode="cover"
-        />
-      )
-    );
-  }, [
-    isPaused,
-    _handleLoad,
-    _handleError,
-    videoRef,
-    _handleProgress,
-    thumb,
-    url,
-    isInModal,
-    isFullScreen,
-    reset,
-  ]);
-
-  const playerEl = useMemo(
-    () => (
-      <VideoPlayer
-        onPlayPause={toggle}
-        duration={data?.duration}
-        currentTime={localProgress?.currentTime}
-        isFullScreen={isFullScreen && isInModal}
-        isPaused={!isInModal && isFullScreen ? true : isPaused}
-        loaded={loaded}
-        onFullScreen={toggleFullScreen}
-        onSlidingComplete={_handleSlidingComplete}
-        error={error}>
-        {videoEl}
-      </VideoPlayer>
-    ),
-    [
-      loaded,
-      isPaused,
-      toggle,
-      isFullScreen,
-      toggleFullScreen,
-      _handleSlidingComplete,
-      isInModal,
-      data?.duration,
-      error,
-      localProgress?.currentTime,
-      videoEl,
-    ],
+  const component = (
+    <VideoPlayer
+      source={{ uri: url! }}
+      onPlayPause={togglePlayPause}
+      duration={duration}
+      currentTime={_progress ?? progress}
+      isFullScreen={isFullScreen && isInModal}
+      isPaused={!isInModal && isFullScreen ? true : isPaused}
+      loaded={!!url && loaded}
+      onFullScreen={toggleFullScreen}
+      onSlidingComplete={_handleSlidingComplete}
+      error={error}
+      // Video props
+      ref={videoRef}
+      onError={_handleError}
+      onLoad={_handleLoad}
+      onProgress={_handleProgress}
+      onEnd={reset}
+      poster={thumb ?? ''}
+      posterResizeMode="cover"
+      onSeek={_handleSeek}
+      onBuffer={(stuff: any) => console.log({ stuff })}
+    />
   );
 
   return {
-    component: playerEl,
+    component,
     videoRef,
     isPaused,
+    isFullScreen,
     progress,
-    toggle,
+    togglePlayPause,
+    reset,
   };
 };
 
 export default useVideoPlayer;
-
-const styles = StyleSheet.create({
-  video: {
-    flex: 1,
-    backgroundColor: 'black',
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    bottom: 0,
-    right: 0,
-  },
-});

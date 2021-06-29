@@ -5,7 +5,14 @@ import useVideoPlayer from '../hooks/useVideoPlayer';
 const VideoPlayerModal = ({ videoId }: { videoId: string }) => {
   const player = useVideoPlayer(videoId, true);
 
-  return <Modal>{player.component}</Modal>;
+  return (
+    <Modal
+      supportedOrientations={['landscape']}
+      presentationStyle={'fullScreen'}
+      statusBarTranslucent={true}>
+      {player.component}
+    </Modal>
+  );
 };
 
 export default VideoPlayerModal;

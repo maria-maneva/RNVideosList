@@ -1,6 +1,5 @@
-import React, { useRef, MutableRefObject } from 'react';
-import { View, StyleSheet, FlatList } from 'react-native';
-import { CARD_HEIGHT } from '../../configs';
+import React, { useRef, MutableRefObject, useMemo } from 'react';
+import { View, StyleSheet, FlatList, useWindowDimensions } from 'react-native';
 import Loader from '../Loader';
 import { useVideos } from '../../hooks/useVideos';
 import VideoListItem from './VideoListItem';
@@ -8,6 +7,8 @@ import VideoListItem from './VideoListItem';
 const VideosList = () => {
   const videos = useVideos();
   const listEl: MutableRefObject<FlatList | null> = useRef(null);
+  const { width } = useWindowDimensions();
+  const cardHeight = useMemo(() => width * (9 / 16), [width]);
 
   return (
     <View style={styles.videosList}>
@@ -19,15 +20,15 @@ const VideosList = () => {
         renderItem={({ item }) => (
           <View
             style={{
-              height: CARD_HEIGHT,
+              height: cardHeight,
             }}>
             <VideoListItem id={item.id} />
           </View>
         )}
         initialNumToRender={4}
         getItemLayout={(_, index) => ({
-          length: CARD_HEIGHT,
-          offset: CARD_HEIGHT * index,
+          length: cardHeight,
+          offset: cardHeight * index,
           index,
         })}
         removeClippedSubviews={false}
