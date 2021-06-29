@@ -42,6 +42,7 @@ const VideoControls = ({
         minimumTrackTintColor="white"
         maximumTrackTintColor="grey"
         thumbTintColor="white"
+        step={1}
       />
       <View style={[styles.controlsItem]}>
         <Text style={styles.buttonText}>{formattedPlayTime}</Text>

@@ -19,20 +19,21 @@ import {
   setToggleVideoFullScreen,
 } from '../store/videos.actions';
 import { useVideosDispatch } from './useVideosDispatch';
+import { Platform } from 'react-native';
 
 const useVideoPlayer = (videoId: string, isInModal?: boolean) => {
   const dispatch = useVideosDispatch();
   const videoRef: MutableRefObject<Video | null> = useRef(null);
 
   const video = useVideo(videoId);
-  const { isPaused, url, thumb, isFullScreen, progress } = video;
+  const { isPaused, url, thumb, isFullScreen, resumeFrom } = video;
   const _isPaused = useMemo(
     () => (!isInModal && isFullScreen ? true : isPaused),
     [isFullScreen, isInModal, isPaused],
   );
 
   const [duration, setDuration] = useState(0);
-  const [_progress, _setProgress] = useState(0);
+  const [progress, setProgress] = useState(0);
   const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState(false);
 
@@ -47,21 +48,24 @@ const useVideoPlayer = (videoId: string, isInModal?: boolean) => {
     dispatch(
       setToggleVideoFullScreen({
         ...video,
-        progress: _progress,
+        resumeFrom: progress,
       }),
     );
-  }, [dispatch, _progress, video]);
+  }, [dispatch, progress, video]);
 
   const reset = useCallback(() => {
     videoRef.current?.seek(0);
-    if (!isPaused) {
+    // 'reset' currently loops on iOS due to this bug
+    // https://github.com/react-native-video/react-native-video/issues/958
+    // can be fixed with adding extra logic if needed
+    if (!isPaused && Platform.OS === 'android') {
       togglePlayPause();
     }
   }, [isPaused, togglePlayPause]);
 
   const _resumePosition = useCallback(() => {
-    videoRef.current?.seek(progress ?? 0, 0);
-  }, [progress]);
+    videoRef.current?.seek(resumeFrom ?? 0, 0);
+  }, [resumeFrom]);
 
   const _handleLoad = useCallback(
     (loadData: OnLoadData) => {
@@ -81,17 +85,17 @@ const useVideoPlayer = (videoId: string, isInModal?: boolean) => {
   }, []);
 
   const _handleSeek = useCallback(({ currentTime }: OnSeekData) => {
-    _setProgress(currentTime);
+    setProgress(Math.ceil(currentTime));
   }, []);
 
   const _handleProgress = useCallback(({ currentTime }: OnProgressData) => {
     setError(false);
-    _setProgress(currentTime);
+    setProgress(Math.ceil(currentTime));
   }, []);
 
   const _handleSlidingComplete = useCallback(
     (value: number) => {
-      videoRef.current?.seek(Math.ceil(value));
+      videoRef.current?.seek(value, 0);
     },
     [videoRef],
   );
@@ -115,7 +119,7 @@ const useVideoPlayer = (videoId: string, isInModal?: boolean) => {
       source={{ uri: url! }}
       onPlayPause={togglePlayPause}
       duration={duration}
-      currentTime={_progress ?? progress}
+      currentTime={progress}
       isFullScreen={isFullScreen && isInModal}
       isPaused={_isPaused}
       loaded={!!url && loaded}
@@ -139,7 +143,7 @@ const useVideoPlayer = (videoId: string, isInModal?: boolean) => {
     videoRef,
     isPaused: _isPaused,
     isFullScreen,
-    progress: _progress,
+    progress,
     togglePlayPause,
     reset,
   };

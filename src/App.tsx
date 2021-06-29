@@ -13,19 +13,21 @@ const App = () => {
   const fullScreenVideo = useFullScreenVideo();
 
   useEffect(() => {
-    const initVideos = async () => {
-      const thumbnails = await createThumnails(videoConfigsInitial);
-      dispatch(
-        setVideos(
-          videoConfigsInitial.map((vc, index) => ({
-            ...vc,
-            thumb: thumbnails[index],
-          })),
-        ),
-      );
-    };
+    if (dispatch) {
+      const initVideos = async () => {
+        const thumbnails = await createThumnails(videoConfigsInitial);
+        dispatch(
+          setVideos(
+            videoConfigsInitial.map((vc, index) => ({
+              ...vc,
+              thumb: thumbnails[index],
+            })),
+          ),
+        );
+      };
 
-    initVideos();
+      initVideos();
+    }
   }, [dispatch]);
 
   return (
