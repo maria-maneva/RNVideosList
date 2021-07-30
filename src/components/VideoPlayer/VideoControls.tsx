@@ -7,9 +7,9 @@ interface IVideoControls {
   currentPlayTime?: number;
   duration?: number;
   isPaused?: boolean;
-  onPlayPause: () => void;
-  onSlidingComplete: (value: number) => void;
-  onFullScreen: () => void;
+  onPlayPause?: () => void;
+  onSlidingComplete?: (value: number) => void;
+  onFullScreen?: () => void;
   isFullScreen?: boolean;
 }
 
@@ -42,6 +42,7 @@ const VideoControls = ({
         minimumTrackTintColor="white"
         maximumTrackTintColor="grey"
         thumbTintColor="white"
+        step={1}
       />
       <View style={[styles.controlsItem]}>
         <Text style={styles.buttonText}>{formattedPlayTime}</Text>

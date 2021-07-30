@@ -1,7 +1,4 @@
 import videos from '../../videos.json';
-
-export const CARD_HEIGHT: number = 280;
-
 interface IInputData {
   description: string;
   sources: string[];
@@ -16,6 +13,7 @@ export interface IVideoConfig {
   thumb?: string | null;
   isPaused: boolean;
   isFullScreen: boolean;
+  resumeFrom?: number;
 }
 
 export const videoConfigsInitial: IVideoConfig[] = (() =>
